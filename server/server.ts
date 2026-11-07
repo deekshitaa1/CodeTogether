@@ -8,12 +8,13 @@ import Docker from "dockerode";
 const app = express();
 const httpServer = createServer(app);
 const PORT = Number(process.env.PORT) || 3001;
-const docker = new Docker({ socketPath: process.env.DOCKER_SOCKET || "//./pipe/docker_engine" });
+const docker = process.env.DOCKER_SOCKET ? new Docker({ socketPath: process.env.DOCKER_SOCKET }) : process.platform === "win32" ? new Docker({ socketPath: "//./pipe/docker_engine" }) : null;
 
 const allowedOrigins = [
   "http://localhost:5173",
   "http://localhost:5174",
   "http://localhost:5175",
+  ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL.replace(/\/$/, "")] : []),
 ];
 
 app.use(cors({ origin: allowedOrigins }));
@@ -893,6 +894,11 @@ io.on("connection", (socket) => {
 
     if (terminalSessions.has(roomId)) {
       callback?.({ ok: true, message: "Room terminal is already running." });
+      return;
+    }
+
+    if (!docker) {
+      callback?.({ ok: false, error: "Interactive terminal is unavailable on this deployment." });
       return;
     }
 
