@@ -89,7 +89,7 @@ app.get("/health", (_req, res) => {
 
 // ---------------- CODE EXECUTION: PISTON ----------------
 
-const PISTON_URL = "http://127.0.0.1:2000/api/v2/execute";
+const PISTON_URL = process.env.ONLINECOMPILER_API_KEY ? "https://api.onlinecompiler.io/api/v2/piston/execute" : (process.env.PISTON_URL || "http://127.0.0.1:2000/api/v2/execute");
 
 const executionRuntimes: Record<string, { language: string; version: string; filename: string }> = {
   python: { language: "python", version: "3.12.0", filename: "main.py" },
@@ -120,7 +120,7 @@ app.post("/api/execute", async (req, res) => {
     const runtime = executionRuntimes[language.toLowerCase()];
     const pistonResponse = await fetch(PISTON_URL, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...(process.env.ONLINECOMPILER_API_KEY ? { Authorization: process.env.ONLINECOMPILER_API_KEY } : {}) },
       signal: AbortSignal.timeout(15000),
       body: JSON.stringify({
         language: runtime.language,
