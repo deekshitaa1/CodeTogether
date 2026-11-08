@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import { io, type Socket } from "socket.io-client";
 import {
@@ -469,6 +469,7 @@ export default function App() {
   const socketRef = useRef<Socket | null>(null);
   const terminalElementRef = useRef<HTMLDivElement | null>(null);
   const terminalInstanceRef = useRef<Terminal | null>(null);
+  const pyodideRef = useRef<any>(null);
   const currentCodeRef = useRef(fileContents["main.ts"]);
   const currentFileRef = useRef<FileName>("main.ts");
   const latestFilesRef = useRef(fileContents);
@@ -903,6 +904,31 @@ export default function App() {
     setRoomRunning(true);
     setRoomRunOutput("Running " + roomLanguage + "...");
 
+    if (roomLanguage === "python" && !API_URL.includes("localhost") && !API_URL.includes("127.0.0.1")) {
+      try {
+        const pyodideWindow = window as Window & { loadPyodide?: (options: { indexURL: string }) => Promise<any> };
+        if (!pyodideRef.current) {
+          if (!pyodideWindow.loadPyodide) throw new Error("Python runtime is not loaded. Refresh and try again.");
+          pyodideRef.current = await pyodideWindow.loadPyodide({ indexURL: "https://cdn.jsdelivr.net/pyodide/v0.27.7/full/" });
+        }
+        let output = "";
+        pyodideRef.current.setStdout({ batched: (text: string) => { output += text + "\n"; } });
+        pyodideRef.current.setStderr({ batched: (text: string) => { output += text + "\n"; } });
+        await pyodideRef.current.runPythonAsync(code);
+        const runOutput = output.trimEnd() || "(No output)";
+        setRoomRunOutput(runOutput);
+        if (terminalInstanceRef.current) terminalInstanceRef.current.writeln(runOutput);
+        else setTerminalOutput((previous) => (previous + "\n" + runOutput + "\n").slice(-30000));
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Python execution failed.";
+        setRoomRunOutput(message);
+        setTerminalOutput((previous) => (previous + "\n" + message + "\n").slice(-30000));
+      } finally {
+        setRoomRunning(false);
+      }
+      return;
+    }
+
     if (roomLanguage === "python") {
       const socket = socketRef.current;
 
@@ -1318,8 +1344,3 @@ export default function App() {
     </main>
   );
 }
-
-
-
-
-

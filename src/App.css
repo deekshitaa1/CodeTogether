@@ -1940,3 +1940,4 @@ textarea:focus-visible {
   }
 }
 
+.call-overlay { pointer-events: none; background: transparent; backdrop-filter: none; display: block; padding: 0; } .call-panel { position: fixed; right: 18px; bottom: 18px; width: min(380px, calc(100vw - 24px)); max-height: min(440px, calc(100vh - 24px)); z-index: 2001; pointer-events: auto; } .call-header { min-height: 48px; padding: 0 12px; } .call-video-grid { min-height: 0; padding: 10px; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; } .video-tile, .video-tile video { min-height: 110px; } .call-controls { padding: 10px; gap: 8px; } @media (max-width: 600px) { .call-panel { right: 8px; bottom: 8px; width: min(340px, calc(100vw - 16px)); max-height: min(430px, calc(100vh - 16px)); } .call-video-grid { grid-template-columns: repeat(auto-fit, minmax(105px, 1fr)); } .video-tile, .video-tile video { min-height: 95px; } }
